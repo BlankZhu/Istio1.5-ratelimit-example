@@ -1,0 +1,82 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: ratelimit-config
+data:
+  config.yaml: |
+    domain: your-service-domain
+    descriptors:
+      - key: remote_address
+        rate_limit:
+          unit: minute
+          requests_per_unit: 5
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: ratelimit-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratelimit
+  template:
+    metadata:
+      labels:
+        app: ratelimit
+    spec:
+      containers:
+        - name: redis-ratelimit
+          image: redis:latest
+          ports:
+          - name: redis
+            containerPort: 6379
+        - name: envoy-ratelimit
+          image: envoyproxy/ratelimit:master
+          ports:
+          - name: debug
+            containerPort: 6070
+          - name: http
+            containerPort: 8080
+          - name: grpc
+            containerPort: 8081
+          env:
+          - name: USE_STATSD
+            value: "false"
+          - name: REDIS_SOCKET_TYPE
+            value: tcp
+          - name: REDIS_URL
+            value: 127.0.0.1:6379
+          - name: RUNTIME_ROOT
+            value: /etc
+          - name: RUNTIME_SUBDIRECTORY
+            value: ratelimit
+          volumeMounts:
+            - name: ratelimit-conf-volumes
+              mountPath: /etc/ratelimit
+          command: ["/bin/ratelimit"]
+      volumes:
+        - name: ratelimit-conf-volumes
+          configMap:
+            name: ratelimit-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ratelimit-service
+  labels:
+    app: ratelimit-service
+spec:
+  ports:
+  - port: 6070
+    name: debug
+  # attention here, envoy-ratelimit might not use http interface
+  # - port: 8080
+  #   name: http
+  - port: 8081
+    name: grpc
+  # not going expose reids
+  # - port: 6379
+  #   name: redis
+  selector:
+    app: ratelimit
