@@ -61,4 +61,4 @@ To validate the ratelimit, you may:
 ## Attention
 
 1. All these configurations are applied to namespace `default` and `istio-system`.
-2. For more config settings, check for the documents in [envoyproxy docs](envoyproxy.io/docs/envoy/latest/).
+2. For more config settings, check for the documents in envoyproxy.io/docs/envoy/latest/.
