@@ -4,8 +4,8 @@ This is a ratelimit example congifurations on Istio 1.5 based on EnvoyFilter
 ## How to Start
 
 ```shell
-kubectl apply -f rate_limit.yaml
-kubectl apply -f rate_limit_filter.yml
+kubectl apply -f rate_limit.yml
+kubectl apply -f rate_limit_filter.yaml
 ```
 
 ## Cleaning Up
